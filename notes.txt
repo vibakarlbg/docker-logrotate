@@ -1,0 +1,15 @@
+k exec vault-0 -c vault -- vault operator init
+
+k exec vault-0 -c vault -- vault login 
+
+k exec vault-0 -c vault -- vault audit enable file file_path=/vault/audit/vault.log
+
+k exec -it vault-0 -c vault -- /bin/sh
+
+k exec -it vault-0 -c logrotate -- /bin/sh
+
+# ----------------------------------------------------------------------------
+# TODO:
+
+# crontab not running scheduled job
+# Automate SIGHUP in logrotate

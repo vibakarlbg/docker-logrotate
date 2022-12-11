@@ -1,0 +1,27 @@
+version: "3"
+
+services:
+  logger:
+    image: busybox
+    command:
+    - /bin/sh
+    - -c
+    - >
+      while true;
+      do
+        echo "[`date`] DEBUG blablablablablablablablablablablablablablabla" >> /logs/date.log;
+        sleep 1;
+      done
+    volumes:
+    - logs:/logs
+
+  logrotate:
+    build: vibakar/logrotate:latest
+    environment:
+      CRON_SCHEDULE: '*/1 * * * *'
+      LOGROTATE_SIZE: 1k
+    volumes:
+    - logs:/logs
+
+volumes:
+  logs:
