@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logrotate
+data:
+  vault: |
+    /vault/audit-*/vault.log  {
+      compress
+      copytruncate
+      daily
+      dateformat -%Y%m%d%H%M
+      maxage 90
+      missingok
+      notifempty
+      rotate 30
+      size 10M
+    } 

@@ -1,0 +1,53 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: logrotate
+spec:
+  schedule: "0 * * * *"
+  failedJobsHistoryLimit: 1 
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: logrotate
+            image: vibakar/logrotate:latest
+            args:
+            - /bin/sh
+            - /logrotate.sh
+            securityContext:
+              runAsUser: 100
+            volumeMounts:
+              - mountPath: /vault/audit-0/
+                name: audit-0
+              - mountPath: /vault/audit-1/
+                name: audit-1
+              - mountPath: /vault/audit-2/
+                name: audit-2
+              - mountPath: /vault/audit-3/
+                name: audit-3
+              - mountPath: /vault/audit-4/
+                name: audit-4
+              - mountPath: /etc/logrotate.d
+                name: logrotate
+          restartPolicy: OnFailure
+          volumes:
+            - name: audit-0
+              persistentVolumeClaim:
+                claimName: audit-vault-0
+            - name: audit-1
+              persistentVolumeClaim:
+                claimName: audit-vault-1
+            - name: audit-2
+              persistentVolumeClaim:
+                claimName: audit-vault-2
+            - name: audit-3
+              persistentVolumeClaim:
+                claimName: audit-vault-3
+            - name: audit-4
+              persistentVolumeClaim:
+                claimName: audit-vault-4
+            - name: logrotate
+              configMap:
+                name: logrotate
