@@ -1,15 +1,22 @@
 k exec vault-0 -c vault -- vault operator init
 
-k exec vault-0 -c vault -- vault login 
+k exec vault-0 -c vault -- vault login <token>
 
 k exec vault-0 -c vault -- vault audit enable file file_path=/vault/audit/vault.log
 
-k exec -it vault-0 -c vault -- /bin/sh
 
-k exec -it vault-0 -c logrotate -- /bin/sh
+k exec -it vault-0 -- /bin/sh
+k exec -it vault-1 -- /bin/sh
+k exec -it vault-2 -- /bin/sh
 
-# ----------------------------------------------------------------------------
-# TODO:
+vault operator step-down
 
-# crontab not running scheduled job
-# Automate SIGHUP in logrotate
+vault secrets enable -path=secret kv-v2
+
+vault kv put secret/webapp/config username="static-user" password="static-password"
+
+vault kv get secret/webapp/config
+
+k apply -f cronjob.yaml
+
+vault operator raft list-peers

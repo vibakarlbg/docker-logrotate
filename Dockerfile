@@ -1,23 +1,15 @@
-FROM alpine:3.17.0
+FROM alpine:latest
 
 ARG USERNAME=appuser
 ARG GROUPNAME=appgroup
 ARG UID=100
 ARG GID=1000
 
-RUN apk update \
-    && apk upgrade \
-    && apk --no-cache add shadow logrotate tini gettext libintl busybox-suid
+RUN apk add logrotate shadow
 
 RUN groupadd -g ${GID} ${GROUPNAME} \
     && useradd -u ${UID} ${USERNAME} -g ${GID} -m
 
-WORKDIR /home/${USERNAME}
+ADD logrotate.sh /logrotate.sh
 
-COPY entrypoint.sh .
-
-USER ${USERNAME}
-
-ENTRYPOINT ["./entrypoint.sh"]
-
-CMD ["/usr/sbin/crond", "-f", "-L", "/dev/stdout", "-c", "/home/appuser"]
+RUN chmod +x /logrotate.sh
