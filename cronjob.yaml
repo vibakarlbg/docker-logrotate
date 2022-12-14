@@ -42,9 +42,6 @@ spec:
             - name: audit-2
               persistentVolumeClaim:
                 claimName: audit-vault-2
-            - name: audit-0
-              persistentVolumeClaim:
-                claimName: audit-vault-0
             - name: audit-3
               persistentVolumeClaim:
                 claimName: audit-vault-3
