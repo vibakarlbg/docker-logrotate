@@ -1,0 +1,43 @@
+logrotate:
+  enabled: true
+  config:
+    name: logrotate
+    image:
+      repository: vibakar/logrotate
+      tag: ruby-lts
+      pullPolicy: IfNotPresent
+    command: '["/bin/sh"]'
+    args: '["-c", "/tmp/logrotate.sh"]'
+    volumeMounts:
+      - mountPath: /etc/logrotate.d
+        name: logrotate
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+      limits:
+        memory: 256Mi
+        cpu: 250m
+        
+        
+        
+{{- if ((.Values.logrotate).enabled) }}
+  {{ include "vault.logrotateConfig" . | nindent 8 }}
+{{- end }}
+
+
+{{- define "vault.logrotateConfig" -}}
+- name: {{ .Values.logrotate.config.name }}
+  image: {{ .Values.logrotate.config.image.repository }}:{{ .Values.logrotate.config.image.tag | default "latest" }}
+  imagePullPolicy: {{ .Values.logrotate.config.image.pullPolicy }}
+  command: {{ tpl .Values.logrotate.config.command . }}
+  args: {{ tpl .Values.logrotate.config.args . }}
+  resources:
+    {{- toYaml .Values.logrotate.config.resources | nindent 4 }}
+  volumeMounts:
+    {{- toYaml .Values.logrotate.config.volumeMounts | nindent 4 }}
+    {{ if eq (.Values.server.auditStorage.enabled | toString) "true" }}
+    - name: audit
+      mountPath: {{ .Values.server.auditStorage.mountPath }}
+    {{- end -}}
+{{- end -}}
