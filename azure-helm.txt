@@ -1,0 +1,19 @@
+ helm template vault --namespace ${{ parameters['chartNamespace'] }} -f vault-stanza.yaml \
+                    --set namespace=${{ parameters['chartNamespace'] }} \
+                    --set server.enabled=${{ parameters['serverEnabled'] }} \
+                    --set server.ha.enabled=${{ parameters['serverHa'] }} \
+                    --set server.ha.raft.enabled=${{ parameters['serverHaRaft'] }} \
+                    --set server.ha.replicas=${{ parameters['serverReplicas'] }} \
+                    --set injector.image.repository=${{ parameters['acrName']}}.azurecr.io/${{ parameters['injectorImageName'] }} \
+                    --set injector.image.tag=${{ parameters['injectorImageTag']}} \
+                    --set injector.resources.requests.cpu=${{ parameters['requestcpu'] }} \
+                    --set injector.resources.requests.memory=${{ parameters['requestmemory'] }} \
+                    --set injector.resources.limits.cpu=${{ parameters['limitscpu'] }} \
+                    --set injector.resources.limits.memory=${{ parameters['limitsmemory'] }} \
+                    --set server.image.repository=${{ parameters['acrName']}}.azurecr.io/${{ parameters['imageName'] }} \
+                    --set server.image.tag=${{ parameters['imageTag']}} \
+                    --set server.resources.requests.cpu=${{ parameters['requestcpu'] }} \
+                    --set server.resources.requests.memory=${{ parameters['requestmemory'] }} \
+                    --set server.resources.limits.cpu=${{ parameters['limitscpu'] }} \
+                    --set server.resources.limits.memory=${{ parameters['limitsmemory'] }} \
+                    $CHART_FILE | kubectl apply -f -
