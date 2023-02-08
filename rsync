@@ -1,0 +1,78 @@
+apiVersion: v1
+data:
+  rsync-job.sh: |
+    #!/bin/bash
+
+    primary={{ .Values.rsync.primarybucket }}
+    secondary={{ .Values.rsync.secondarybucket }}
+    sleep_time={{ .Values.rsync.waittime }}
+
+    function log() {
+        local text="$(date +"%d-%m-%Y %T") ${1} - ${2}"
+        echo "${text}"
+    }
+
+    function check_errors() {
+        if [ "${1}" != "0" ]; then
+            log "ERROR" "Failed with return code ${1} : ${2}"
+        else
+            log "INFO" "${3}"
+        fi
+    }
+
+    function log_bucket() {
+        contents=$(gsutil ls $1)
+        check_errors $? "Cannot connect to bucket: $1" "Contents of bucket $1:"
+        for line in ${contents}; do
+            log "INFO" "${line}"
+        done
+    }
+
+    log "INFO" "Starting bucket sync script..."
+    log "INFO" "Getting initial bucket status..."
+    log_bucket ${primary}
+    log_bucket ${secondary}
+
+    log "INFO" "Running initial bucket sync..."
+    gsutil rsync -d -r ${primary} ${secondary}
+    check_errors $? "Initial sync unsuccessful." "Initial sync successful."
+
+    current_latest=$(gsutil ls ${primary} | tail -n 1)
+    check_errors $? "Unable to retrieve latest snapshot created." "Latest snapshot: ${current_latest}"
+
+    log "INFO" "Bucket status after initial bucket sync..."
+    log_bucket ${primary}
+    log_bucket ${secondary}
+
+    while true
+    do
+        log "INFO" "Process is sleeping for ${sleep_time} seconds..."
+        sleep ${sleep_time};
+
+        log "INFO" "Checking primary bucket for new snapshots..."
+        newest=$(gsutil ls ${primary} | tail -n 1)
+        check_errors $? "Unable to retrieve newest snapshot created." "Old latest snapshot: ${current_latest}"
+        log "INFO" "New latest snapshot: ${newest}"
+
+        if [ ${current_latest} != ${newest} ]; then
+            log "INFO" "New snapshot found. Starting bucket sync..."
+            gsutil rsync -d -r ${primary} ${secondary}
+            check_errors $? "Bucket sync unsuccessful." "Bucket sync successful."
+
+            current_latest=$(gsutil ls ${primary} | tail -n 1)
+            check_errors $? "Unable to retrieve latest snapshot created." "Latest snapshot: ${current_latest}"
+
+            log "INFO" "Bucket status after bucket sync..."
+            log_bucket ${primary}
+            log_bucket ${secondary}
+        else
+            log "INFO" "No new snapshot found..."
+        fi
+    done
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: rsync-job
+  namespace: ns-kcl-mgmt-ctu-hcv
+  annotations:
+    strategy.spinnaker.io/versioned: 'false'
